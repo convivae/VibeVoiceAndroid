@@ -8,7 +8,7 @@
 
 **v1.0 — Cloud ASR MVP**
 
-Status: 🔴 Phase 0 (立项规划中)
+Status: 🟡 Phase 1 (Planning complete — 3 plans ready for execution)
 
 ## Phase Status
 
