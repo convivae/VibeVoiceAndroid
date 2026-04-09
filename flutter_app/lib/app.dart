@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/config/api_config.dart';
+import 'presentation/screens/home_screen.dart';
 
 class VibeVoiceApp extends ConsumerWidget {
   const VibeVoiceApp({super.key});
@@ -17,11 +17,7 @@ class VibeVoiceApp extends ConsumerWidget {
         ),
         useMaterial3: true,
       ),
-      home: const Scaffold(
-        body: Center(
-          child: Text('VibeVoice - Loading...'),
-        ),
-      ),
+      home: const HomeScreen(),
     );
   }
 }
