@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.routers import asr, health
+from app.routers import asr, health, tts, voices
 
 
 @asynccontextmanager
@@ -31,6 +31,8 @@ app.add_middleware(
 
 app.include_router(asr.router, prefix="/v1/asr", tags=["ASR"])
 app.include_router(health.router, tags=["Health"])
+app.include_router(tts.router, prefix="/v1/tts", tags=["TTS"])
+app.include_router(voices.router, tags=["Voices"])
 
 
 @app.get("/")
