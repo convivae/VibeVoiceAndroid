@@ -17,7 +17,7 @@ class VibeVoiceApp extends ConsumerWidget {
         ),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const MainScreen(),
     );
   }
 }

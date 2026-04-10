@@ -8,6 +8,7 @@ import '../widgets/transcription_display.dart';
 import '../widgets/status_indicator.dart';
 import '../widgets/language_toggle.dart';
 import '../widgets/network_status_bar.dart';
+import 'tts_screen.dart';
 
 /// Main home screen of the VibeVoice ASR app.
 ///
@@ -145,6 +146,54 @@ class HomeScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Main screen with bottom tab navigation for ASR and TTS.
+/// Per 02-CONTEXT.md D-01: Independent tabs with bottom navigation.
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _currentIndex = 0;
+
+  final _screens = const [
+    HomeScreen(), // ASR Tab (existing)
+    TtsScreen(), // TTS Tab (new)
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.mic_outlined),
+            selectedIcon: Icon(Icons.mic),
+            label: '语音输入',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.speaker_phone_outlined),
+            selectedIcon: Icon(Icons.speaker_phone),
+            label: '语音合成',
+          ),
+        ],
       ),
     );
   }
