@@ -17,6 +17,9 @@ dependencies:
   # Audio recording (per D-09 — package is 'record', NOT 'flutter_record')
   record: ^6.2.0
   
+  # Audio playback (per Phase 2 decision)
+  flutter_soloud: ^3.2.1
+
   # WebSocket client (per RESEARCH.md §1.2)
   web_socket_channel: ^3.0.1
   
