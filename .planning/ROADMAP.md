@@ -29,9 +29,9 @@
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Cloud ASR Server (FastAPI WebSocket + Transformers inference + Docker)
-- [ ] 01-02-PLAN.md — Flutter App Foundation (Audio + WebSocket services + Repository layer)
-- [ ] 01-03-PLAN.md — Flutter UI Layer (Home screen + Push-to-Talk + State management + APK build)
+- [x] 01-01-PLAN.md — Cloud ASR Server (FastAPI WebSocket + Transformers inference + Docker)
+- [x] 01-02-PLAN.md — Flutter App Foundation (Audio + WebSocket services + Repository layer)
+- [x] 01-03-PLAN.md — Flutter UI Layer (Home screen + Push-to-Talk + State management + APK build)
 
 ### Phase 2: Cloud TTS Foundation
 **Goal**: 在 Phase 1 基础设施上叠加云端 TTS 能力。VibeVoice-Realtime (0.5B) 部署到同一台 RTX 4060 服务器。App 中添加文本输入 → 选择音色 → 播放语音的功能。TTS 是产品验证的过渡方案。

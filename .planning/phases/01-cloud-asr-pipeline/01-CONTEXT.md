@@ -32,7 +32,7 @@
 - **D-08:** FastAPI WebSocket 端点：`/v1/asr/stream`，健康检查：`/health`。
 
 ### Flutter App 架构
-- **D-09:** 麦克风录音库：flutter_record。API 支持流式读取 PCM chunks，适合 WebSocket 实时上传。
+- **D-09:** 麦克风录音库：`record`。API 支持流式读取 PCM chunks，适合 WebSocket 实时上传。
 - **D-10:** 音频参数：16kHz 或 24kHz 采样率（对齐 VibeVoice-ASR 输入要求），mono，16-bit PCM。
 - **D-11:** 音频 chunk 大小：50ms chunks（~800-1200 bytes per chunk at 16kHz）。
 - **D-12:** Flutter 状态管理：Riverpod（或 BLoC，参照 SPEC.md 1.3 节模块设计）。

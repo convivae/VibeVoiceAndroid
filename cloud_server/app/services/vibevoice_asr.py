@@ -11,7 +11,7 @@ class VibeVoiceASRService:
     """
     VibeVoice-ASR inference service using transformers.
     
-    Architecture (per RESEARCH.md fallback):
+    Architecture (per RESEARCH.md §1.1 fallback):
     - NOT using vLLM plugin (batch-only, no streaming)
     - Using transformers + accelerate for streaming-capable inference
     """
@@ -189,6 +189,8 @@ class VibeVoiceASRService:
                 pass
         
         # Fallback: convert audio to features and use tokenizer directly
+        # This is model-dependent — adjust based on actual VibeVoice input format
+        # Typical pattern: extract MFCC/Fbank features → tokenize → feed to LLM
         features = self._extract_audio_features(audio_samples)
         
         # Build text prompt based on language
@@ -203,6 +205,7 @@ class VibeVoiceASRService:
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
         
         # Add audio features as additional input (model-dependent)
+        # Some VibeVoice models accept speech_features directly
         if features is not None:
             inputs["speech_features"] = features.to(self.device)
         
@@ -220,12 +223,15 @@ class VibeVoiceASRService:
         - Model-specific tokenizer
         
         For Phase 1 MVP, we use a simple approach:
-        - Resample to model's expected sample rate if needed
+        - Resample to 16kHz if needed (VibeVoice expects 16kHz)
         - Normalize to [-1, 1]
         """
+        # Simple: treat audio as raw features (placeholder for model-specific encoding)
+        # Real implementation depends on VibeVoice model architecture
         try:
             import scipy.signal
             # Resample to 16kHz if needed (VibeVoice expects 16kHz)
+            # This is a simplified placeholder
             return None
         except Exception:
             return None

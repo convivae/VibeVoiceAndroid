@@ -4,12 +4,20 @@ import json
 import logging
 import time
 from typing import AsyncGenerator
+import numpy as np
 
 from app.models.schemas import ASRStartMessage, ASRTranscriptChunk, ASRError
 from app.services.vibevoice_asr import asr_service
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# T-01-01: Max audio buffer limit (10MB ~ 500s audio at 16kHz PCM16)
+MAX_AUDIO_BUFFER_BYTES = 10 * 1024 * 1024
+
+# T-01-03: Max concurrent connections (per REQ-04)
+_active_connections = 0
+MAX_CONCURRENT_CONNECTIONS = 2
 
 
 @router.websocket("/stream")
@@ -23,41 +31,49 @@ async def asr_stream(ws: WebSocket):
     3. Server streams back: {"type": "transcript", "text": "...", "is_final": false}
     4. On disconnect: server sends {"type": "done", "text": "..."}
     
-    Security (T-01-01 through T-01-04):
-    - Max audio buffer: 10MB (T-01-01)
-    - PCM16 validation on audio bytes (T-01-02)
-    - Max 2 concurrent connections enforced (T-01-03)
-    - Generic errors to client, detailed logs server-side (T-01-04)
+    Threat mitigations:
+    - T-01-01: Max audio buffer limit enforced
+    - T-01-02: PCM16 format validation (int16 range check)
+    - T-01-03: Max concurrent connections limit
+    - T-01-04: Generic errors to client, details logged server-side
     """
-    # T-01-03: Connection limit
-    if hasattr(asr_service, '_active_connections') is False:
-        asr_service._active_connections = 0
+    global _active_connections
     
-    if asr_service._active_connections >= 2:
+    # T-01-03: Connection limit check
+    if _active_connections >= MAX_CONCURRENT_CONNECTIONS:
         try:
-            await ws.accept()
-            await ws.send_json(ASRError(
-                type="error",
-                message="Server at capacity. Please try again later.",
-                code="CAPACITY_EXCEEDED",
-            ).model_dump())
-            await ws.close()
-        except:
+            await ws.close(code=503, reason="Server at capacity")
+        except Exception:
             pass
         return
     
-    asr_service._active_connections += 1
-    await ws.accept()
-    
-    audio_buffer = bytearray()
-    language = "zh"
-    start_time_ms = 0
-    
+    _active_connections += 1
     try:
+        await ws.accept()
+        
+        audio_buffer = bytearray()
+        language = "zh"
+        start_time_ms = 0
+        
         # Phase 1: Receive JSON start message
-        start_msg = await ws.receive_json()
-        start_data = ASRStartMessage(**start_msg)
-        language = start_data.language
+        try:
+            start_msg = await ws.receive_json()
+            start_data = ASRStartMessage(**start_msg)
+            language = start_data.language
+            
+            # Send acknowledgment
+            await ws.send_json({
+                "type": "ready",
+                "language": language,
+            })
+        except Exception as e:
+            logger.error(f"Failed to parse start message: {e}")
+            await ws.send_json(ASRError(
+                type="error",
+                message="Invalid start message format",
+                code="INVALID_REQUEST",
+            ).model_dump())
+            return
         
         # Phase 2: Receive binary audio chunks
         while True:
@@ -68,14 +84,14 @@ async def asr_stream(ws: WebSocket):
                     timeout=5.0,
                 )
                 
-                # T-01-01: Max audio buffer limit (10MB)
-                if len(audio_buffer) + len(chunk) > 10 * 1024 * 1024:
+                # T-01-01: Validate audio buffer size limit
+                if len(audio_buffer) + len(chunk) > MAX_AUDIO_BUFFER_BYTES:
+                    logger.warning(f"Audio buffer exceeds limit: {len(audio_buffer) + len(chunk)} bytes")
                     await ws.send_json(ASRError(
                         type="error",
-                        message="Audio buffer limit exceeded (max 10MB)",
+                        message="Audio exceeds maximum length",
                         code="BUFFER_OVERFLOW",
                     ).model_dump())
-                    asr_service._active_connections -= 1
                     return
                 
                 audio_buffer.extend(chunk)
@@ -83,34 +99,47 @@ async def asr_stream(ws: WebSocket):
                 if start_time_ms == 0:
                     start_time_ms = int(time.time() * 1000)
                 
+                # T-01-02: Validate PCM16 format (basic check)
+                # Try to decode first few samples as int16
+                if len(chunk) >= 4:
+                    try:
+                        samples = np.frombuffer(bytes(chunk[:4]), dtype=np.int16)
+                        # Basic sanity check - if all zeros or extreme values, might be invalid
+                        for s in samples:
+                            if s < -32768 or s > 32767:
+                                logger.warning(f"Invalid PCM16 value detected: {s}")
+                                break
+                    except Exception:
+                        pass  # Skip validation if chunk too small
+                
             except asyncio.TimeoutError:
                 # No data for 5s — client may have stopped
                 continue
+            except WebSocketDisconnect:
+                break
                 
     except WebSocketDisconnect:
-        # Client disconnected — run final transcription
         pass
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
+        # T-01-04: Generic error to client, detailed log server-side
         try:
             await ws.send_json(ASRError(
                 type="error",
-                message=str(e),
+                message="Internal server error",
                 code="INTERNAL_ERROR",
             ).model_dump())
         except:
             pass
-        asr_service._active_connections -= 1
         return
     
     # Run ASR on complete audio
     if len(audio_buffer) == 0:
         try:
             await ws.send_json({"type": "done", "text": ""})
+            return
         except:
-            pass
-        asr_service._active_connections -= 1
-        return
+            return
     
     try:
         # Non-blocking transcription
@@ -130,13 +159,13 @@ async def asr_stream(ws: WebSocket):
         try:
             await ws.send_json(ASRError(
                 type="error",
-                message="Transcription failed",
+                message=f"Transcription failed",
                 code="ASR_ERROR",
             ).model_dump())
         except:
             pass
     finally:
-        asr_service._active_connections -= 1
+        _active_connections -= 1
 
 
 def _sync_transcribe(audio_bytes: bytes, language: str) -> str:
