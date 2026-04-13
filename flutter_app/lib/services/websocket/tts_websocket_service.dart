@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../domain/entities/asr_result.dart';
-import '../../domain/entities/voice_info.dart';
 
 /// TTS message types from WebSocket server (per 02-S-PLAN.md protocol).
 sealed class TtsMessage {}
@@ -18,7 +16,7 @@ class TtsMetadata extends TtsMessage {
   final int estimatedChunks;
   final int estimatedDurationMs;
 
-  const TtsMetadata({
+  TtsMetadata({
     required this.sampleRate,
     required this.channels,
     required this.format,
@@ -35,7 +33,7 @@ class TtsAudioChunk extends TtsMessage {
   final int timestampMs;
   final Uint8List audioData;
 
-  const TtsAudioChunk({
+  TtsAudioChunk({
     required this.chunkIndex,
     required this.isFinal,
     required this.timestampMs,
@@ -48,7 +46,7 @@ class TtsDone extends TtsMessage {
   final int totalChunks;
   final int totalDurationMs;
 
-  const TtsDone({required this.totalChunks, required this.totalDurationMs});
+  TtsDone({required this.totalChunks, required this.totalDurationMs});
 }
 
 /// Server sends on error.
@@ -56,7 +54,7 @@ class TtsErrorMessage extends TtsMessage {
   final String code;
   final String message;
 
-  const TtsErrorMessage({required this.code, required this.message});
+  TtsErrorMessage({required this.code, required this.message});
 }
 
 /// WebSocket service for TTS streaming.
@@ -67,8 +65,8 @@ class TtsWebSocketService {
   final StreamController<TtsMessage> _messageController =
       StreamController<TtsMessage>.broadcast();
 
-  final StreamController<ConnectionState> _stateController =
-      StreamController<ConnectionState>.broadcast();
+  final StreamController<WsConnectionState> _stateController =
+      StreamController<WsConnectionState>.broadcast();
 
   /// Exponential backoff config (same as ASR per D-18).
   static const int maxRetries = 5;
@@ -79,15 +77,15 @@ class TtsWebSocketService {
   Duration _currentDelay = baseDelay;
   bool _disposed = false;
   String? _lastUrl;
-  ConnectionState _state = ConnectionState.disconnected;
+  WsConnectionState _state = WsConnectionState.disconnected;
 
   /// Pending audio chunk header (JSON) waiting for binary data.
   Map<String, dynamic>? _pendingChunkHeader;
   bool _expectingBinary = false;
 
   Stream<TtsMessage> get messageStream => _messageController.stream;
-  Stream<ConnectionState> get connectionStateAsStream => _stateController.stream;
-  ConnectionState get connectionState => _state;
+  Stream<WsConnectionState> get connectionStateAsStream => _stateController.stream;
+  WsConnectionState get connectionState => _state;
 
   /// Connect to TTS WebSocket endpoint.
   Future<void> connect() async {
@@ -95,7 +93,7 @@ class TtsWebSocketService {
 
     _retryCount = 0;
     _currentDelay = baseDelay;
-    _updateState(ConnectionState.connecting);
+    _updateState(WsConnectionState.connecting);
 
     try {
       final baseUrl = 'ws://localhost:8000'; // TODO: from api_config
@@ -109,14 +107,14 @@ class TtsWebSocketService {
         onDone: _onDone,
       );
 
-      _updateState(ConnectionState.connected);
+      _updateState(WsConnectionState.connected);
     } catch (e) {
       debugPrint('TTS WebSocket connect error: $e');
       await _handleDisconnect(e);
     }
   }
 
-  void _updateState(ConnectionState state) {
+  void _updateState(WsConnectionState state) {
     _state = state;
     if (!_stateController.isClosed) {
       _stateController.add(state);
@@ -195,15 +193,15 @@ class TtsWebSocketService {
   }
 
   Future<void> _handleDisconnect(Object error) async {
-    if (_disposed || _state == ConnectionState.disconnected) return;
+    if (_disposed || _state == WsConnectionState.disconnected) return;
 
     if (_retryCount >= maxRetries) {
       debugPrint('Max TTS retries reached ($maxRetries). Giving up.');
-      _updateState(ConnectionState.failed);
+      _updateState(WsConnectionState.failed);
       return;
     }
 
-    _updateState(ConnectionState.reconnecting);
+    _updateState(WsConnectionState.reconnecting);
 
     debugPrint(
       'TTS reconnecting in ${_currentDelay.inSeconds}s '
@@ -245,7 +243,7 @@ class TtsWebSocketService {
   /// Disconnect immediately (called on stop per D-08).
   Future<void> disconnect() async {
     _retryCount = maxRetries; // Prevent auto-reconnect
-    _updateState(ConnectionState.disconnected);
+    _updateState(WsConnectionState.disconnected);
     _pendingChunkHeader = null;
     _expectingBinary = false;
     await _channel?.sink.close();

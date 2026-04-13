@@ -15,7 +15,6 @@
     <application
         android:label="VibeVoice"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
 
         <activity

@@ -13,7 +13,7 @@ class TtsNotifier extends StateNotifier<TtsState> {
   final TtsAudioPlayer _audioPlayer;
 
   StreamSubscription<TtsMessage>? _messageSubscription;
-  StreamSubscription<ConnectionState>? _connectionSubscription;
+  StreamSubscription<WsConnectionState>? _connectionSubscription;
   Timer? _progressTimer;
 
   TtsNotifier(this._wsService, this._audioPlayer) : super(const TtsState()) {
@@ -28,7 +28,7 @@ class TtsNotifier extends StateNotifier<TtsState> {
     _connectionSubscription = _wsService.connectionStateAsStream.listen((connState) {
       state = state.copyWith(connectionState: connState);
 
-      if (connState == ConnectionState.failed) {
+      if (connState == WsConnectionState.failed) {
         state = state.copyWith(
           playbackState: TtsPlaybackState.error,
           errorMessage: '连接失败，请检查网络',
@@ -272,6 +272,6 @@ final availableVoicesProvider = Provider<List<VoiceInfo>>((ref) {
 });
 
 /// Current TTS connection state (for screen-level display).
-final ttsConnectionStateProvider = Provider<ConnectionState>((ref) {
+final ttsWsConnectionStateProvider = Provider<WsConnectionState>((ref) {
   return ref.watch(ttsProvider).connectionState;
 });

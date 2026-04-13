@@ -61,7 +61,7 @@ class TtsState {
   final List<VoiceInfo> availableVoices;
 
   /// WebSocket connection state (mirrors ASR pattern).
-  final ConnectionState connectionState;
+  final WsConnectionState connectionState;
 
   const TtsState({
     this.playbackState = TtsPlaybackState.idle,
@@ -76,7 +76,7 @@ class TtsState {
     this.currentPositionMs = 0,
     this.errorMessage,
     this.availableVoices = const [],
-    this.connectionState = ConnectionState.disconnected,
+    this.connectionState = WsConnectionState.disconnected,
   });
 
   /// Format duration display string (e.g., "00:30 / 01:00").
@@ -120,7 +120,7 @@ class TtsState {
     String? errorMessage,
     bool clearError = false,
     List<VoiceInfo>? availableVoices,
-    ConnectionState? connectionState,
+    WsConnectionState? connectionState,
   }) {
     return TtsState(
       playbackState: playbackState ?? this.playbackState,

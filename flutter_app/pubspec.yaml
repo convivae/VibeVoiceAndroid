@@ -11,8 +11,8 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   
-  # State management (per D-12)
-  flutter_riverpod: ^3.3.1
+  # State management (per D-12) — v2.x for StateNotifier API compatibility
+  flutter_riverpod: ^2.5.1
   
   # Audio recording (per D-09 — package is 'record', NOT 'flutter_record')
   record: ^6.2.0

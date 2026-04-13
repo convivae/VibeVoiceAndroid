@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../domain/entities/asr_result.dart';
-import '../../core/errors/exceptions.dart';
 
 /// WebSocket service for communicating with the VibeVoice-ASR cloud server.
 /// Implements exponential backoff reconnection per D-18.
@@ -24,12 +23,12 @@ class WebSocketService {
   String? _lastUrl;
   Timer? _reconnectTimer;
   
-  ConnectionState _state = ConnectionState.disconnected;
-  final StreamController<ConnectionState> _stateController =
-      StreamController<ConnectionState>.broadcast();
+  WsConnectionState _state = WsConnectionState.disconnected;
+  final StreamController<WsConnectionState> _stateController =
+      StreamController<WsConnectionState>.broadcast();
   
-  Stream<ConnectionState> get connectionStateAsStream => _stateController.stream;
-  ConnectionState get connectionState => _state;
+  Stream<WsConnectionState> get connectionStateAsStream => _stateController.stream;
+  WsConnectionState get connectionState => _state;
   
   Stream<Map<String, dynamic>> get messageStream => _messageController.stream;
   
@@ -39,7 +38,7 @@ class WebSocketService {
     _lastUrl = url;
     _retryCount = 0;
     _currentDelay = baseDelay;
-    _updateState(ConnectionState.connecting);
+    _updateState(WsConnectionState.connecting);
     
     try {
       _channel = WebSocketChannel.connect(Uri.parse(url));
@@ -50,7 +49,7 @@ class WebSocketService {
         onDone: _onDone,
       );
       
-      _updateState(ConnectionState.connected);
+      _updateState(WsConnectionState.connected);
     } on WebSocketChannelException catch (e) {
       await _handleDisconnect(e);
     } catch (e) {
@@ -59,7 +58,7 @@ class WebSocketService {
     }
   }
   
-  void _updateState(ConnectionState state) {
+  void _updateState(WsConnectionState state) {
     _state = state;
     if (!_stateController.isClosed) {
       _stateController.add(state);
@@ -94,17 +93,17 @@ class WebSocketService {
   }
   
   Future<void> _handleDisconnect(Object error) async {
-    if (_disposed || _state == ConnectionState.disconnected) {
+    if (_disposed || _state == WsConnectionState.disconnected) {
       return;
     }
     
     if (_retryCount >= maxRetries) {
       debugPrint('Max retries reached ($maxRetries). Giving up.');
-      _updateState(ConnectionState.failed);
+      _updateState(WsConnectionState.failed);
       return;
     }
     
-    _updateState(ConnectionState.reconnecting);
+    _updateState(WsConnectionState.reconnecting);
     
     debugPrint(
       'Reconnecting in ${_currentDelay.inSeconds}s '
@@ -147,7 +146,7 @@ class WebSocketService {
   Future<void> disconnect() async {
     _reconnectTimer?.cancel();
     _retryCount = maxRetries;
-    _updateState(ConnectionState.disconnected);
+    _updateState(WsConnectionState.disconnected);
     await _channel?.sink.close();
     _channel = null;
   }

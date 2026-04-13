@@ -1,21 +1,27 @@
 plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin"
+    id("com.android.application")
+    id("kotlin-android")
+    id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
     namespace = "com.vibevoice.app"
-    compileSdk = 35  // Android 14 (API 34) or higher for best compatibility
+    compileSdk = flutter.compileSdkVersion
 
     defaultConfig {
         applicationId = "com.vibevoice.app"
-        minSdk = 24   // Android 7.0, covers 98%+ devices (C-01)
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
-        multiDexEnabled true
+        minSdk = 24
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+
+        // 只编译 arm64-v8a 大幅加速构建
+        ndk {
+            abiFilters += listOf("arm64-v8a")
+        }
     }
+
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -23,24 +29,21 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     buildFeatures {
         buildConfig = true
     }
 
-    sourceSets {
-        main {
-            manifest.srcFile 'src/main/AndroidManifest.xml'
+    // 只构建 arm64-v8a ABI
+    splits {
+        abi {
+            isEnable = false
         }
     }
 }
 
 flutter {
-    source '../..'
-}
-
-dependencies {
-    implementation 'androidx.multidex:multidex:2.0.1'
+    source = "../.."
 }

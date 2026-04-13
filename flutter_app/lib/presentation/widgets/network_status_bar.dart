@@ -11,17 +11,17 @@ class NetworkStatusBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isNetworkAvailable = ref.watch(isNetworkAvailableProvider);
-    final connectionState = ref.watch(currentConnectionStateProvider);
+    final connectionState = ref.watch(currentWsConnectionStateProvider);
 
     // Only show bar when there are issues
-    if (isNetworkAvailable && connectionState == ConnectionState.connected) {
+    if (isNetworkAvailable && connectionState == WsConnectionState.connected) {
       return const SizedBox.shrink();
     }
 
     final bool noNetwork = !isNetworkAvailable;
-    final bool serverIssue = connectionState == ConnectionState.failed ||
-        connectionState == ConnectionState.reconnecting ||
-        connectionState == ConnectionState.connecting;
+    final bool serverIssue = connectionState == WsConnectionState.failed ||
+        connectionState == WsConnectionState.reconnecting ||
+        connectionState == WsConnectionState.connecting;
 
     return Container(
       width: double.infinity,
@@ -54,12 +54,12 @@ class NetworkStatusBar extends ConsumerWidget {
     );
   }
 
-  IconData _getStateIcon(ConnectionState state) {
+  IconData _getStateIcon(WsConnectionState state) {
     switch (state) {
-      case ConnectionState.connecting:
-      case ConnectionState.reconnecting:
+      case WsConnectionState.connecting:
+      case WsConnectionState.reconnecting:
         return Icons.cloud_sync;
-      case ConnectionState.failed:
+      case WsConnectionState.failed:
         return Icons.cloud_off;
       default:
         return Icons.cloud_outlined;

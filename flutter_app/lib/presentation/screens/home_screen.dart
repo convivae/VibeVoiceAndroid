@@ -24,7 +24,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asrState = ref.watch(asrProvider);
-    final connectionState = ref.watch(currentConnectionStateProvider);
+    final connectionState = ref.watch(currentWsConnectionStateProvider);
     final isRecording = asrState.isRecording;
     final permStatus = asrState.microphonePermission;
 
@@ -113,9 +113,9 @@ class HomeScreen extends ConsumerWidget {
                     child: Text(
                       isRecording
                           ? '松开结束录音...'
-                          : (connectionState == ConnectionState.connected
+                          : (connectionState == WsConnectionState.connected
                               ? '长按麦克风开始说话'
-                              : (connectionState == ConnectionState.connecting
+                              : (connectionState == WsConnectionState.connecting
                                   ? '连接中...'
                                   : '等待连接...')),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(

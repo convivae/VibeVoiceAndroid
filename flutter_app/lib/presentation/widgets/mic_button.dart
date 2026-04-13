@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/entities/asr_result.dart';
 import '../providers/voice_provider.dart';
 import '../providers/connection_provider.dart';
 
@@ -64,12 +65,12 @@ class _MicButtonState extends ConsumerState<MicButton>
   @override
   Widget build(BuildContext context) {
     final asrState = ref.watch(asrProvider);
-    final connectionState = ref.watch(currentConnectionStateProvider);
+    final connectionState = ref.watch(currentWsConnectionStateProvider);
     final isRecording = asrState.isRecording;
 
     // Disable button if not connected (allow retry when disconnected)
-    final canRecord = connectionState == ConnectionState.connected ||
-        connectionState == ConnectionState.disconnected;
+    final canRecord = connectionState == WsConnectionState.connected ||
+        connectionState == WsConnectionState.disconnected;
 
     return GestureDetector(
       onLongPressStart: canRecord ? _onPressStart : null,

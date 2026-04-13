@@ -1,13 +1,8 @@
-import 'dart:async';
 import 'dart:typed_data';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:record/record.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../domain/entities/asr_result.dart';
 import '../../domain/repositories/voice_repository.dart';
 import '../../core/config/api_config.dart';
-import '../../core/constants/audio_constants.dart';
-import '../../core/errors/exceptions.dart';
+import '../../services/audio/audio_exceptions.dart';
 import '../../services/audio/audio_recorder_service.dart';
 import '../../services/websocket/websocket_service.dart';
 
@@ -32,11 +27,11 @@ class VoiceRepositoryImpl implements VoiceRepository {
   set language(String value) => _language = value;
   
   @override
-  Stream<ConnectionState> get connectionStateStream =>
+  Stream<WsConnectionState> get connectionStateStream =>
       _wsService.connectionStateAsStream;
   
   @override
-  ConnectionState get connectionState =>
+  WsConnectionState get connectionState =>
       _wsService.connectionState;
   
   @override
@@ -63,7 +58,7 @@ class VoiceRepositoryImpl implements VoiceRepository {
     }
     
     // Start WebSocket if not connected
-    if (connectionState != ConnectionState.connected) {
+    if (connectionState != WsConnectionState.connected) {
       await connect();
     }
     

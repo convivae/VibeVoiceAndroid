@@ -11,15 +11,15 @@ class StatusIndicator extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final connectionState = ref.watch(currentConnectionStateProvider);
+    final connectionState = ref.watch(currentWsConnectionStateProvider);
     final asrState = ref.watch(asrProvider);
 
     // Determine actual display state
-    ConnectionState displayState = connectionState;
+    WsConnectionState displayState = connectionState;
     if (asrState.isRecording) {
-      displayState = ConnectionState.recording;
+      displayState = WsConnectionState.recording;
     } else if (asrState.isProcessing) {
-      displayState = ConnectionState.processing;
+      displayState = WsConnectionState.processing;
     }
 
     final statusText = displayState.statusText;
@@ -52,12 +52,12 @@ class StatusIndicator extends ConsumerWidget {
     );
   }
 
-  Widget _buildIndicator(BuildContext context, ConnectionState state) {
+  Widget _buildIndicator(BuildContext context, WsConnectionState state) {
     switch (state) {
-      case ConnectionState.connected:
+      case WsConnectionState.connected:
         return const _PulsingDot(color: Colors.green);
-      case ConnectionState.connecting:
-      case ConnectionState.reconnecting:
+      case WsConnectionState.connecting:
+      case WsConnectionState.reconnecting:
         return SizedBox(
           width: 12,
           height: 12,
@@ -66,17 +66,17 @@ class StatusIndicator extends ConsumerWidget {
             color: Theme.of(context).colorScheme.primary,
           ),
         );
-      case ConnectionState.failed:
+      case WsConnectionState.failed:
         return Icon(
           Icons.error_outline,
           size: 14,
           color: Colors.red.shade700,
         );
-      case ConnectionState.recording:
+      case WsConnectionState.recording:
         return const _RecordingIndicator();
-      case ConnectionState.processing:
+      case WsConnectionState.processing:
         return const _ProcessingIndicator();
-      case ConnectionState.disconnected:
+      case WsConnectionState.disconnected:
       default:
         return Icon(
           Icons.circle,
@@ -86,38 +86,38 @@ class StatusIndicator extends ConsumerWidget {
     }
   }
 
-  Color _getBackgroundColor(BuildContext context, ConnectionState state, bool hasError) {
+  Color _getBackgroundColor(BuildContext context, WsConnectionState state, bool hasError) {
     if (hasError) return Colors.red.shade50;
     switch (state) {
-      case ConnectionState.connected:
+      case WsConnectionState.connected:
         return Colors.green.shade50;
-      case ConnectionState.connecting:
-      case ConnectionState.reconnecting:
+      case WsConnectionState.connecting:
+      case WsConnectionState.reconnecting:
         return Colors.blue.shade50;
-      case ConnectionState.failed:
+      case WsConnectionState.failed:
         return Colors.red.shade50;
-      case ConnectionState.recording:
+      case WsConnectionState.recording:
         return Colors.red.shade50;
-      case ConnectionState.processing:
+      case WsConnectionState.processing:
         return Colors.orange.shade50;
       default:
         return Colors.grey.shade100;
     }
   }
 
-  Color _getTextColor(BuildContext context, ConnectionState state, bool hasError) {
+  Color _getTextColor(BuildContext context, WsConnectionState state, bool hasError) {
     if (hasError) return Colors.red.shade700;
     switch (state) {
-      case ConnectionState.connected:
+      case WsConnectionState.connected:
         return Colors.green.shade700;
-      case ConnectionState.connecting:
-      case ConnectionState.reconnecting:
+      case WsConnectionState.connecting:
+      case WsConnectionState.reconnecting:
         return Colors.blue.shade700;
-      case ConnectionState.failed:
+      case WsConnectionState.failed:
         return Colors.red.shade700;
-      case ConnectionState.recording:
+      case WsConnectionState.recording:
         return Colors.red.shade700;
-      case ConnectionState.processing:
+      case WsConnectionState.processing:
         return Colors.orange.shade700;
       default:
         return Colors.grey.shade700;

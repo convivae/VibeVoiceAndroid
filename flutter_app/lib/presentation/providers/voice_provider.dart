@@ -81,7 +81,7 @@ class AsrNotifier extends StateNotifier<AsrState> {
   final Ref _ref;
 
   StreamSubscription<AsrResult>? _transcriptionSubscription;
-  StreamSubscription<ConnectionState>? _connectionSubscription;
+  StreamSubscription<WsConnectionState>? _connectionSubscription;
 
   AsrNotifier(this._repository, this._ref) : super(const AsrState()) {
     _init();
@@ -94,7 +94,7 @@ class AsrNotifier extends StateNotifier<AsrState> {
     );
 
     _connectionSubscription = _repository.connectionStateStream.listen(
-      _onConnectionStateChanged,
+      _onWsConnectionStateChanged,
     );
 
     _checkPermission();
@@ -141,8 +141,8 @@ class AsrNotifier extends StateNotifier<AsrState> {
     );
   }
 
-  void _onConnectionStateChanged(ConnectionState connState) {
-    if (connState == ConnectionState.failed) {
+  void _onWsConnectionStateChanged(WsConnectionState connState) {
+    if (connState == WsConnectionState.failed) {
       state = state.copyWith(
         errorMessage: '连接失败，请检查网络',
         isRecording: false,

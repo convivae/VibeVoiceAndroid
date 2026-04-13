@@ -45,54 +45,54 @@ class AsrResult {
 }
 
 /// WebSocket connection states (per D-19)
-enum ConnectionState {
+enum WsConnectionState {
   /// Not connected, idle
   disconnected,
-  
+
   /// Attempting to connect
   connecting,
-  
+
   /// Successfully connected and ready
   connected,
-  
+
   /// Lost connection, attempting to reconnect (per D-18)
   reconnecting,
-  
+
   /// Permanently failed after max retries
   failed,
-  
+
   /// Recording audio but not yet connected
   recording,
-  
+
   /// Audio sent, waiting for transcription result
   processing,
 }
 
-extension ConnectionStateX on ConnectionState {
+extension WsConnectionStateX on WsConnectionState {
   /// Human-readable status text for UI display (per D-19, D-20)
   String get statusText {
     switch (this) {
-      case ConnectionState.disconnected:
+      case WsConnectionState.disconnected:
         return '未连接';
-      case ConnectionState.connecting:
+      case WsConnectionState.connecting:
         return '连接中...';
-      case ConnectionState.connected:
+      case WsConnectionState.connected:
         return '已连接';
-      case ConnectionState.reconnecting:
+      case WsConnectionState.reconnecting:
         return '正在重连...';
-      case ConnectionState.failed:
+      case WsConnectionState.failed:
         return '连接失败';
-      case ConnectionState.recording:
+      case WsConnectionState.recording:
         return '录音中...';
-      case ConnectionState.processing:
+      case WsConnectionState.processing:
         return '转写中...';
     }
   }
-  
+
   /// Whether this state indicates an error condition
-  bool get isError => this == ConnectionState.failed;
-  
+  bool get isError => this == WsConnectionState.failed;
+
   /// Whether the user can interact (try recording)
-  bool get canRecord => this == ConnectionState.connected || 
-                        this == ConnectionState.disconnected;
+  bool get canRecord => this == WsConnectionState.connected ||
+                        this == WsConnectionState.disconnected;
 }

@@ -12,7 +12,7 @@ Per 02-CONTEXT.md D-09:
 - Unload ASR before loading TTS to free VRAM
 """
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
-from fastapi.websockets.experimental import WebSocketState
+from starlette.websockets import WebSocketState
 import asyncio
 import json
 import logging

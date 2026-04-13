@@ -203,33 +203,33 @@ class _TtsScreenState extends ConsumerState<TtsScreen> {
     );
   }
 
-  Widget _buildConnectionStatus(BuildContext context, ConnectionState connState) {
+  Widget _buildConnectionStatus(BuildContext context, WsConnectionState connState) {
     Color color;
     String text;
     IconData icon;
 
     switch (connState) {
-      case ConnectionState.connected:
+      case WsConnectionState.connected:
         color = Colors.green;
         text = '已连接';
         icon = Icons.cloud_done;
         break;
-      case ConnectionState.connecting:
+      case WsConnectionState.connecting:
         color = Colors.orange;
         text = '连接中';
         icon = Icons.cloud_sync;
         break;
-      case ConnectionState.reconnecting:
+      case WsConnectionState.reconnecting:
         color = Colors.orange;
         text = '重连中';
         icon = Icons.cloud_sync;
         break;
-      case ConnectionState.failed:
+      case WsConnectionState.failed:
         color = Colors.red;
         text = '连接失败';
         icon = Icons.cloud_off;
         break;
-      case ConnectionState.disconnected:
+      case WsConnectionState.disconnected:
         color = Colors.grey;
         text = '未连接';
         icon = Icons.cloud_outlined;

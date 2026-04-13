@@ -6,8 +6,8 @@ import '../entities/asr_result.dart';
 /// This is the interface — implementation is in voice_repository_impl.dart.
 abstract class VoiceRepository {
   /// Current connection state
-  Stream<ConnectionState> get connectionStateStream;
-  ConnectionState get connectionState;
+  Stream<WsConnectionState> get connectionStateStream;
+  WsConnectionState get connectionState;
   
   /// Stream of transcription results from the server
   Stream<AsrResult> get transcriptionStream;
