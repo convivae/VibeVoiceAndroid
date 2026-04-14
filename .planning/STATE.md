@@ -14,7 +14,7 @@ progress:
 
 # State
 
-**Last updated**: 2026-04-02
+**Last updated**: 2026-04-14
 
 ## Project: VibeVoice Android
 
@@ -30,7 +30,7 @@ Status: Ready to execute Phase 2
 |-------|--------|-------|
 | Phase 1: Cloud ASR | ✅ Complete | 3/3 plans, APK pending (flutter build) |
 | Phase 2: Cloud TTS | ⚪ Not started | TTS as transition solution |
-| Phase 3: On-Device ASR | ⚪ Not started | INT4 quantization |
+| Phase 3: On-Device ASR | 🔄 In Progress | TensorFlow Lite, on-device priority, first-use download |
 | Phase 4: On-Device TTS | ⚪ Not started | 0.5B realtime model |
 
 ## Key Notes
@@ -44,3 +44,4 @@ Status: Ready to execute Phase 2
 
 - 2026-04-02: Project created. SPEC.md written. Direction confirmed: Phase 1 = Cloud ASR (not TTS).
 - 2026-04-02: Discuss-phase completed. 7 gray areas explored, all decisions locked. CONTEXT.md + DISCUSSION-LOG.md committed (hash: 4b73718).
+- 2026-04-14: Phase 3 discuss-phase completed. Decisions locked: TensorFlow Lite (for Gemma4 migration), on-device priority + auto-fallback-to-cloud, first-use model download, Push-to-Talk (no VAD). CONTEXT.md + DISCUSSION-LOG.md committed (hash: 63fb347).
