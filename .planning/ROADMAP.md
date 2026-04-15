@@ -44,14 +44,23 @@ Plans:
 **Plans**: TBD
 
 ### Phase 3: On-Device ASR
-**Goal**: 3 个月内将 VibeVoice-ASR (7B) 量化为移动端可用大小（INT4 AWQ，~400MB），实现 iOS/Android 离线语音识别。
+**Goal**: 3 个月内将 VibeVoice-ASR (9B) 量化为移动端可用大小（INT4 AWQ），实现 iOS/Android 离线语音识别。目标 < 500MB，但 9B INT4 实际约 4-5GB，需模型裁剪或分层加载方案。
 **Depends on**: Phase 2
 **Success Criteria** (what must be TRUE):
   1. 模型大小 < 500MB（INT4 LLM + FP16 VAE），可打包进 APK
   2. 内存峰值 < 1.5GB VRAM（Android Profiler 验证）
   3. 推理延迟 < 5s（60s 音频），离线模式下功能完整
   4. ASR WER 相比 FP16 损失 < 15%（LibriSpeech test-clean 验证）
-**Plans**: TBD
+**Plans:** 5 plans
+
+**Important Note**: VibeVoice-ASR is actually 9B parameters (not 7B). INT4 AWQ quantized model is ~4-5GB, not 400MB. Phase 3 includes model size validation as a BLOCKING checkpoint.
+
+Plans:
+- [ ] 03-01-PLAN.md — Model Quantization & TFLite Export (Wave 1, server-side)
+- [ ] 03-02-PLAN.md — Flutter TFLite Integration (Wave 1, Flutter-side)
+- [ ] 03-03-PLAN.md — Model Download & Management (Wave 2)
+- [ ] 03-04-PLAN.md — Hybrid Routing & State Management (Wave 2)
+- [ ] 03-05-PLAN.md — Performance Validation & Integration Tests (Wave 3)
 
 ### Phase 4: On-Device Realtime TTS
 **Goal**: 将 VibeVoice-Realtime (0.5B) 移植到移动端，实现离线实时语音合成。Phase 3 的终极目标。
