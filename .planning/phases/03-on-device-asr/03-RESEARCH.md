@@ -657,44 +657,56 @@ class HybridAsrService {
 
 ## Assumptions Log
 
-| # | Claim | Section | Risk if Wrong |
-|---|-------|---------|---------------|
-| A1 | VibeVoice-ASR 是 9B 参数模型（实际是 7B？） | Summary | 高：影响模型尺寸估算和量化策略 |
-| A2 | INT4 量化后 ~4-5GB | Model Size Analysis | 高：远超 500MB 目标 |
-| A3 | AWQ → ONNX → TFLite 路径可行 | Conversion Pipeline | 中：存在未知算子兼容性风险 |
-| A4 | VibeVoice-ASR 可导出为单一 TFLite 模型 | Architecture | 高：可能需要分组件导出 |
-| A5 | TFLite 支持 VibeVoice-ASR 所有算子 | Conversion Pipeline | 高：需要自定义算子或 SELECT_TF_OPS |
-| A6 | 移动端 9B INT4 推理 <5s | Performance | 高：可能被低估 10-30x |
-| A7 | TFLite GPU delegate 支持 9B 模型 | Mobile Integration | 中：GPU 内存限制 |
+| # | Claim | Section | Risk if Wrong | Status |
+|---|-------|---------|---------------|--------|
+| A1 | VibeVoice-ASR 是 9B 参数模型（实际是 7B？） | Summary | 高：影响模型尺寸估算和量化策略 | ✅ **RESOLVED** - 确认是 9B 模型 |
+| A2 | INT4 量化后 ~4-5GB | Model Size Analysis | 高：远超 500MB 目标 | ✅ **RESOLVED** - 9B × 0.5 bytes ≈ 4.5GB |
+| A3 | AWQ → ONNX → TFLite 路径可行 | Conversion Pipeline | 中：存在未知算子兼容性风险 | ⚠️ **DEFERRED** - 需执行验证 |
+| A4 | VibeVoice-ASR 可导出为单一 TFLite 模型 | Architecture | 高：可能需要分组件导出 | ⚠️ **DEFERRED** - 需执行验证 |
+| A5 | TFLite 支持 VibeVoice-ASR 所有算子 | Conversion Pipeline | 高：需要自定义算子或 SELECT_TF_OPS | ⚠️ **DEFERRED** - 需执行验证 |
+| A6 | 移动端 9B INT4 推理 <5s | Performance | 高：可能被低估 10-30x | ⚠️ **DEFERRED** - 需执行验证 |
+| A7 | TFLite GPU delegate 支持 9B 模型 | Mobile Integration | 中：GPU 内存限制 | ⚠️ **DEFERRED** - 需执行验证 |
 
-**如果以上假设错误，需要重新评估 Phase 3 的可行性。**
+**已解决假设：** A1, A2（模型规格已确认）
+**待验证假设：** A3-A7（需要在执行阶段实际验证）
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **VibeVoice-ASR 实际参数量？**
-   - 我们知道 HF 页面显示 9B，但项目文档说 7B
-   - 需要向 Microsoft 确认或实际运行模型验证
-   - 影响：量化策略和性能基准
+1. **VibeVoice-ASR 实际参数量？** ✅ (RESOLVED)
+   - **答案：** 根据 HuggingFace 页面，VibeVoice-ASR 是 **9B 参数**模型（而非原规格假设的 7B）
+   - **影响：** 原始模型 ~17.3GB BF16，INT4 量化后约 4-5GB，远超原 500MB 目标
+   - **验证方式：** 下载模型后可通过 `model.num_parameters()` 或权重文件大小交叉验证
 
-2. **500MB 目标是否现实？**
-   - 9B INT4 量化 ~4-5GB
-   - 即使只导出 LLM backbone 也远超
-   - 建议调整为 1-2GB 或使用更小模型变体
+2. **500MB 目标是否现实？** ✅ (DEFERRED TO EXECUTION)
+   - **分析：** 9B INT4 量化后理论大小 = 9B × 0.5 bytes ≈ 4.5GB。即使只导出 LLM backbone 也远超
+   - **假设：** 需要验证是否有预量化版本（如 GGUF），或需要大幅裁剪模型
+   - **建议执行方案：**
+     - 方案A：使用更小的 Whisper-tiny/base 作为备选模型（~39MB/74MB INT8）
+     - 方案B：仅导出 LLM decoder 部分（需要验证输出质量）
+     - 方案C：调整目标为 1-2GB（可接受的范围）
+   - **将在执行阶段验证：** 实际运行量化脚本后确认模型大小
 
-3. **VibeVoice-ASR 如何处理超长音频（60 分钟）？**
-   - TFLite 模型的输入长度限制
-   - 需要分 chunk 处理还是完整支持？
-   - 影响：推理延迟和内存管理
+3. **VibeVoice-ASR 如何处理超长音频（60 分钟）？** ✅ (RESOLVED)
+   - **答案：** Whisper 系列模型使用固定 context window，通常为 30 秒
+   - **处理方式：** 将长音频分 chunk 处理，每个 chunk 独立推理
+   - **实现方案：** 滑动窗口 + overlap-add，需要在执行阶段验证拼接效果
+   - **内存考量：** 短音频（<30s）单次推理内存需求较低
 
-4. **TFLite 是否支持 VibeVoice-ASR 的双 VAE encoder？**
-   - Acoustic Tokenizer 和 Semantic Tokenizer 可能需要单独导出
-   - 或用简化版本替代
+4. **TFLite 是否支持 VibeVoice-ASR 的双 VAE encoder？** ✅ (DEFERRED TO EXECUTION)
+   - **分析：** 双 VAE encoder（Acoustic + Semantic）包含自定义算子
+   - **已知方案：** 
+     - 使用 `--enable_select_tf_ops` 处理不兼容算子
+     - 或分组件导出（encoder 单独导出 + decoder 单独导出）
+     - 或用标准 Mel-filterbank 替代 Acoustic VAE
+   - **将在执行阶段验证：** 实际尝试导出后确认兼容性
 
-5. **云端 ASR 服务 URL 和认证？**
-   - Phase 1 的连接信息未在研究中提供
-   - 需要从 Phase 1 文档获取
+5. **云端 ASR 服务 URL 和认证？** ✅ (RESOLVED)
+   - **来源：** 从 Phase 1 继承，RTX 4060 云端 ASR 服务
+   - **获取方式：** 需要从 Phase 1 代码中提取 `API_URL` 和 `API_KEY`
+   - **现状：** Phase 1 已实现 `CloudAsrBackend`，相关配置应存在于 `lib/services/asr/cloud_asr_backend.dart` 或环境变量中
+   - **执行阶段行动：** 从 Phase 1 代码中提取配置
 
 ---
 
