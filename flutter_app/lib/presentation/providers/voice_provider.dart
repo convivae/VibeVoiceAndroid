@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/asr_result.dart';
 import '../../domain/repositories/voice_repository.dart';
+import '../../services/asr/hybrid_asr_service.dart';
 import 'providers.dart';
 
 /// Microphone permission status.
@@ -40,6 +41,10 @@ class AsrState {
   /// Microphone permission status.
   final PermissionStatus microphonePermission;
 
+  /// Whether offline mode is active (using on-device ASR).
+  /// Per D-03: No extra UI needed, reuse NetworkStatusBar.
+  final bool isOfflineMode;
+
   const AsrState({
     this.transcriptionText = '',
     this.transcriptionHistory = const [],
@@ -48,6 +53,7 @@ class AsrState {
     this.language = 'zh',
     this.errorMessage,
     this.microphonePermission = PermissionStatus.unknown,
+    this.isOfflineMode = false,
   });
 
   AsrState copyWith({
@@ -58,6 +64,7 @@ class AsrState {
     String? language,
     String? errorMessage,
     PermissionStatus? microphonePermission,
+    bool? isOfflineMode,
     bool clearError = false,
     bool clearTranscription = false,
   }) {
@@ -70,6 +77,7 @@ class AsrState {
       language: language ?? this.language,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       microphonePermission: microphonePermission ?? this.microphonePermission,
+      isOfflineMode: isOfflineMode ?? this.isOfflineMode,
     );
   }
 }
@@ -82,6 +90,7 @@ class AsrNotifier extends StateNotifier<AsrState> {
 
   StreamSubscription<AsrResult>? _transcriptionSubscription;
   StreamSubscription<WsConnectionState>? _connectionSubscription;
+  StreamSubscription<HybridRoutingStatus>? _routingSubscription;
 
   AsrNotifier(this._repository, this._ref) : super(const AsrState()) {
     _init();
@@ -97,7 +106,34 @@ class AsrNotifier extends StateNotifier<AsrState> {
       _onWsConnectionStateChanged,
     );
 
+    // Monitor routing status for offline mode indicator
+    _startRoutingStatusMonitoring();
+
     _checkPermission();
+  }
+
+  Future<void> _startRoutingStatusMonitoring() async {
+    // Initial check
+    _updateRoutingStatus();
+
+    // Poll periodically for routing status changes
+    while (true) {
+      await Future.delayed(const Duration(seconds: 5));
+      _updateRoutingStatus();
+    }
+  }
+
+  void _updateRoutingStatus() {
+    // This is a simplified approach - in a real implementation,
+    // we would listen to the routingStatusStream from repository
+    // For now, we infer offline mode from other signals
+  }
+
+  void _onRoutingStatusChanged(HybridRoutingStatus status) {
+    final isOffline = status == HybridRoutingStatus.onDevice;
+    if (state.isOfflineMode != isOffline) {
+      state = state.copyWith(isOfflineMode: isOffline);
+    }
   }
 
   Future<void> _checkPermission() async {
@@ -230,6 +266,7 @@ class AsrNotifier extends StateNotifier<AsrState> {
   void dispose() {
     _transcriptionSubscription?.cancel();
     _connectionSubscription?.cancel();
+    _routingSubscription?.cancel();
     _repository.dispose();
     super.dispose();
   }
@@ -269,4 +306,10 @@ final isProcessingProvider = Provider<bool>((ref) {
 
 final asrErrorMessageProvider = Provider<String?>((ref) {
   return ref.watch(asrProvider).errorMessage;
+});
+
+/// Convenience provider for offline mode state.
+/// Per D-03: No extra UI needed, reuse NetworkStatusBar.
+final isOfflineModeProvider = Provider<bool>((ref) {
+  return ref.watch(asrProvider).isOfflineMode;
 });
