@@ -35,6 +35,12 @@ dependencies:
   # Network connectivity
   connectivity_plus: ^6.1.1
 
+  # TFLite for on-device ASR inference (D-15)
+  tflite_flutter: ^0.12.1
+
+  # Path resolution for model file storage
+  path_provider: ^2.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
