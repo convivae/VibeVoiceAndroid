@@ -44,16 +44,16 @@ Plans:
 **Plans**: TBD
 
 ### Phase 3: On-Device ASR
-**Goal**: 3 个月内将 VibeVoice-ASR (9B) 量化为移动端可用大小（INT4 AWQ），实现 iOS/Android 离线语音识别。目标 < 500MB，但 9B INT4 实际约 4-5GB，需模型裁剪或分层加载方案。
+**Goal**: 3 个月内将 VibeVoice-ASR (9B) 量化为移动端可用大小（INT4 AWQ ~4-5GB），实现 iOS/Android 离线语音识别。模型通过按需下载方式提供（APK 保持苗条），支持 2-3GB 内存占用的现代设备。
 **Depends on**: Phase 2
 **Success Criteria** (what must be TRUE):
-  1. 模型大小 < 500MB（INT4 LLM + FP16 VAE），可打包进 APK
-  2. 内存峰值 < 1.5GB VRAM（Android Profiler 验证）
+  1. 模型大小 < 5GB（INT4 AWQ），通过 ModelDownloadManager 下载使用
+  2. 内存峰值 < 3GB（Android Profiler 验证）
   3. 推理延迟 < 5s（60s 音频），离线模式下功能完整
   4. ASR WER 相比 FP16 损失 < 15%（LibriSpeech test-clean 验证）
 **Plans:** 5 plans
 
-**Important Note**: VibeVoice-ASR is actually 9B parameters (not 7B). INT4 AWQ quantized model is ~4-5GB, not 400MB. Phase 3 includes model size validation as a BLOCKING checkpoint.
+**Important Note**: VibeVoice-ASR is actually 9B parameters (not 7B). INT4 AWQ quantized model is ~4-5GB. Model is downloaded separately via ModelDownloadManager (APK stays lean). Option-b selected: accept 4-5GB target, proceed with full 9B model.
 
 Plans:
 - [ ] 03-01-PLAN.md — Model Quantization & TFLite Export (Wave 1, server-side)
