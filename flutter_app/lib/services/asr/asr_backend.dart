@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 import '../../domain/entities/asr_result.dart';
 
+export '../../domain/entities/asr_result.dart';
+
 /// Abstract interface for ASR backends (D-16).
 /// Both cloud and on-device implementations implement this interface.
 abstract class AsrBackend {

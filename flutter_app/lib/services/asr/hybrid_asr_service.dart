@@ -32,14 +32,7 @@ class HybridAsrService {
   /// Check if on-device ASR is available.
   /// Conditions: model downloaded AND (network unavailable OR preference for on-device)
   Future<bool> isOnDeviceAvailable() async {
-    // Check 1: Model downloaded
-    if (!_onDeviceBackend.isAvailable) {
-      return false;
-    }
-
-    // On-device works when offline OR when model is ready
-    // Even if network is available, on-device is preferred for offline capability
-    return true; // Model is ready
+    return _onDeviceBackend.isAvailable;
   }
 
   /// Check if cloud ASR is available.
@@ -52,6 +45,10 @@ class HybridAsrService {
     }
 
     // Check 2: Actually try to reach the server (per RESEARCH.md Pitfall 5)
+    // Skip health check if no server URL configured
+    if (_apiBaseUrl.isEmpty) {
+      return false;
+    }
     try {
       final response = await _dio.head(
         '$_apiBaseUrl/health',
